@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "421771382433",
+    "project_id": "rollingball-654ac",
+    "storage_bucket": "rollingball-654ac.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:421771382433:android:2bdd09ddebfa52df716ae0",
+        "android_client_info": {
+          "package_name": "com.rollingballapp.rollingball"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "421771382433-ui46fj1i2jmop8tsuii9anr6ab25ta54.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rollingballapp.rollingball",
+            "certificate_hash": "2539cdf3c1305415b8c0b5db79113f3052f4652b"
+          }
+        },
+        {
+          "client_id": "421771382433-5r4602cf1ajj4262sjhv39k8aot695gn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwZb799oln6wdvfizzw9z9VwqgkyrCenI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "421771382433-5r4602cf1ajj4262sjhv39k8aot695gn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

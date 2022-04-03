@@ -1,0 +1,372 @@
+import 'dart:ui' as UI;
+import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:rollingball/constant/my_constant.dart';
+import 'package:rollingball/util/assets_path.dart';
+import 'package:syncfusion_flutter_sliders/sliders.dart';
+
+class HomeScreen extends StatefulWidget {
+  @override
+  _PlanetsState createState() => _PlanetsState();
+}
+
+bool _isMatch = false;
+bool isStop = true;
+
+class _PlanetsState extends State<HomeScreen> with TickerProviderStateMixin {
+  AnimationController? _controller;
+  Animation? _animation;
+  String result = "Result";
+
+  dynamic _value = 1.0;
+
+  @override
+  void initState() {
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 3),
+    );
+    _animation = Tween(begin: 0.0, end: _value).animate(_controller!)
+      ..addListener(() {});
+    super.initState();
+  }
+
+  CollectionReference user = FirebaseFirestore.instance.collection('users');
+
+  Stream<QuerySnapshot> getPoints() {
+    return user.doc(MyConstant.currentUserId).collection('points').snapshots();
+  }
+
+  addPoints() async {
+    await user
+        .doc(MyConstant.currentUserId)
+        .collection('points')
+        .doc(MyConstant.currentUserId)
+        .update({'points': FieldValue.increment(50)});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+    var height = MediaQuery.of(context).size.height;
+    return WillPopScope(
+      onWillPop: () async {
+        SystemNavigator.pop();
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                    margin: EdgeInsets.only(top: 50),
+                    width: width * 0.2,
+                    height: height * 0.08,
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                            topRight: Radius.circular(10),
+                            bottomRight: Radius.circular(10)),
+                        color: _isMatch ? Colors.green : Colors.red),
+                    child: Center(child: Text(result))),
+                Container(
+                    margin: EdgeInsets.only(top: 50),
+                    width: width * 0.3,
+                    height: height * 0.08,
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(10),
+                            topLeft: Radius.circular(10)),
+                        color: Colors.blue.withOpacity(0.3)),
+                    child: StreamBuilder<QuerySnapshot>(
+                        stream: getPoints(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return Center(child: Text('Getting points....'));
+                          }
+                          if (snapshot.data!.size == 0) {
+                            return Center(child: Text('No points'));
+                          }
+                          return Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  Text(
+                                      'Coins : ${snapshot.data!.docs[0]['points'].toString()}'),
+                                  Image.asset(AssetsPath.coinPath,height: 30,width: 30,)
+                                ],
+                              ));
+                        })),
+              ],
+            ),
+            SizedBox(
+              height: height * 0.21,
+            ),
+            AnimatedBuilder(
+                animation: _controller!,
+                builder: (context, snapshot) {
+                  return Center(
+                    child: CustomPaint(
+                      painter: AtomPaint(
+                        value: _controller!.value,
+                        animation: _animation,
+                      ),
+                    ),
+                  );
+                }),
+            SizedBox(
+              height: height * 0.25,
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 5),
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.blue.withOpacity(0.2)),
+              width: width * 0.9,
+              child: SfSlider(
+                min: 0.0,
+                max: 10.0,
+                value: _value,
+                interval: 1,
+                showTicks: true,
+                showLabels: true,
+                enableTooltip: true,
+               // minorTicksPerInterval: 1,
+                onChanged: (value) {
+                  setState(() {
+                    _value = value;
+                    int range = value.toInt();
+                    int speed = 11 - range;
+                    _controller!.duration = Duration(seconds: speed);
+
+                    _controller?.forward();
+                    _controller?.repeat();
+                  });
+                },
+              ),
+            ),
+            SizedBox(
+              height: height * 0.1,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                InkWell(
+                  child: Container(
+                    width: width * 0.40,
+                    height: height * 0.06,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30.0, vertical: 5),
+                      child: Center(
+                        child: Text(
+                          "Stop",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.red),
+                  ),
+                  onTap: () {
+                    _controller?.stop();
+                    bool check = AtomPaint.checkCordination();
+                    isStop = true;
+                    if (check == true) {
+                      addPoints();
+                      setState(() {
+                        result = "Win!";
+                        _isMatch = true;
+                        offset = Offset(10, 155);
+                      });
+                    } else {
+                      setState(() {
+                        _isMatch = false;
+                        result = "Loss!";
+                      });
+                    }
+                  },
+                ),
+                SizedBox(
+                  width: 20,
+                ),
+                InkWell(
+                  child: Container(
+                    width: width * 0.40,
+                    height: height * 0.06,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30.0, vertical: 5),
+                      child: Center(
+                        child: Text(
+                          "Start",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.green),
+                  ),
+                  onTap: () {
+                    _controller?.forward();
+                    _controller?.repeat();
+                    setState(() {
+                      isStop = false;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+var offset;
+
+class AtomPaint extends CustomPainter {
+  AtomPaint({
+    required this.value,
+    required this.animation,
+  });
+
+  Animation? animation;
+  static var offset1;
+  final double value;
+  var ovalPath;
+  Paint _axisPaint = Paint()
+    ..color = Colors.green
+    ..strokeWidth = 2.0
+    ..style = PaintingStyle.stroke;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    drawAxis(
+        value,
+        canvas,
+        160,
+        Paint()
+          ..color = isStop
+              ? _isMatch
+                  ? Colors.green
+                  : Colors.red
+              : Colors.blue);
+  }
+
+  drawAxis(double value, Canvas canvas, double radius, Paint paint) {
+    ovalPath = getCirclePath(radius);
+
+    canvas.drawPath(
+      ovalPath,
+      _axisPaint,
+    );
+    cicle(ovalPath, canvas, paint, 1);
+    cicle2(ovalPath, canvas);
+  }
+
+  Path getCirclePath(double radius) {
+    return Path()
+      ..addOval(Rect.fromCircle(center: Offset(0, 0), radius: radius));
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
+  }
+
+  void cicle(var ovalPath, Canvas canvas, Paint paint, double devision) {
+    UI.PathMetrics pathMetrics = ovalPath.computeMetrics();
+    for (UI.PathMetric pathMetric in pathMetrics) {
+      Path extractPath = pathMetric.extractPath(
+        0.0,
+        pathMetric.length * value,
+      );
+      try {
+        var metric = extractPath.computeMetrics().first;
+        offset = metric.getTangentForOffset(metric.length)?.position;
+        print("offset of circle one is ${offset}");
+        canvas.drawCircle((calculate(animation?.value)!), 20.0, paint);
+      } catch (e) {}
+    }
+  }
+
+  void cicle2(var ovalPath, Canvas canvas) {
+    UI.PathMetrics pathMetrics = ovalPath.computeMetrics();
+    for (UI.PathMetric pathMetric in pathMetrics) {
+      Path extractPath = pathMetric.extractPath(
+        0.0,
+        pathMetric.length * value,
+      );
+      print("path is $extractPath");
+      try {
+        offset1 = Offset(10, 155);
+        canvas.drawCircle(offset1!, 20.0, Paint()..color = Colors.green);
+        print("offset of circle 2 is ${offset1}");
+      } catch (e) {}
+    }
+  }
+
+  static bool checkCordination() {
+    bool resultX = isXAxisNear();
+    bool resultY = isYAxisNear();
+
+    if (resultX && resultY) {
+      return true;
+    } else {
+      return false;
+    }
+    // if((offset!.dx<=80 && offset!.dx >=50 ) && (offset!.dy <=150 &&offset!.dy >=130))
+    // {
+    //   return true;
+    // }
+    // else
+    // {
+    //   return false;
+    // }
+  }
+
+  static bool isXAxisNear() {
+    print("////current position is ${offset1.dx},${offset1.dy}");
+    // giving margin of 7;
+    if (offset1!.dx >= offset.dx - 7 && offset1.dx <= offset.dx + 7) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  static bool isYAxisNear() {
+    // giving margin of 7;
+    if (offset1!.dy >= offset.dy - 7 && offset1.dy <= offset.dy + 7) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  Offset? calculate(value) {
+    PathMetrics? pathMetrics = ovalPath?.computeMetrics();
+    PathMetric? pathMetric = pathMetrics?.elementAt(0);
+    value = (pathMetric!.length * value);
+    Tangent? pos = pathMetric.getTangentForOffset(value);
+    return pos?.position;
+  }
+}
