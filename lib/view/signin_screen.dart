@@ -67,7 +67,7 @@ class _SignInScreenState extends State<SignInScreen> {
               child: Container(
                 width: ScreenSize.width * 0.9,
                 height: 50,
-                child: Center(child:Text("Continue As guest", style: TextStyle(fontSize: 14,color: blueTextColor),),),
+                child: Center(child:Text("Continue as Guest", style: TextStyle(fontSize: 14,color: blueTextColor),),),
                 decoration:textFieldDecoration(),
               ),
             )

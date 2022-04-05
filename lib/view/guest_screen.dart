@@ -25,7 +25,7 @@ class _PlanetsState extends State<GuestScreen> with TickerProviderStateMixin {
   void initState() {
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 3),
+      duration: Duration(seconds:3),
     );
     _animation = Tween(begin: 0.0, end: _value).animate(_controller!)
       ..addListener(() {});
@@ -94,22 +94,26 @@ class _PlanetsState extends State<GuestScreen> with TickerProviderStateMixin {
                 color: Colors.blue.withOpacity(0.2)),
             width: width * 0.9,
             child: SfSlider(
-              min: 0.0,
-              max: 10.0,
+              min: 1.0,
+              max: 1000.0,
               value: _value,
-              interval: 3,
+              interval: 999,
               showTicks: true,
               showLabels: true,
               enableTooltip: true,
-              minorTicksPerInterval: 1,
+              minorTicksPerInterval: 50,
               onChanged: (value) {
                 setState(() {
                   _value = value;
                   int range = value.toInt();
                   print("speed is $range");
-                  int speed = 10 - range;
-                  _controller!.duration = Duration(seconds: speed);
-
+                  if(range==1000){
+                    _controller!.duration = Duration(milliseconds: 10);
+                  }
+                 else{
+                    int speed = 1000 - range;
+                    _controller!.duration = Duration(milliseconds:speed*2);
+                  }
                   _controller?.forward();
                   _controller?.repeat();
                 });
@@ -119,89 +123,72 @@ class _PlanetsState extends State<GuestScreen> with TickerProviderStateMixin {
           SizedBox(
             height: height * 0.1,
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              InkWell(
-                child: Container(
-                  width: width * 0.40,
-                  height: height * 0.06,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 30.0, vertical: 5),
-                    child: Center(
-                      child: Text(
-                        "Stop",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 24,
-                          color: Colors.white,
-                        ),
-                      ),
+
+          GestureDetector(
+            child: Container(
+              //width: width * 0.40,
+              height: height * 0.15,
+              child:  Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 30.0, vertical: 5),
+                child: Center(
+                  child: isStop?const Text(
+                    "Start",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                      color: Colors.white,
+                    ),
+                  ):const Text(
+                    "Stop",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                      color: Colors.white,
                     ),
                   ),
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: Colors.red),
                 ),
-                onTap: () {
-                  _controller?.stop();
-                  bool check = AtomPaint.checkCordination();
-                  isStop = true;
-                  if (check == true) {
-                    setState(() {
-                      result = "Win!";
-                      _isMatch = true;
-                      offset = Offset(10, 155);
-                    });
-                  } else {
-                    setState(() {
-                      _isMatch = false;
-                      result = "Loss!";
-                    });
-                  }
-                },
               ),
-              SizedBox(
-                width: 20,
-              ),
-              InkWell(
-                child: Container(
-                  width: width * 0.40,
-                  height: height * 0.06,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 30.0, vertical: 5),
-                    child: Center(
-                      child: Text(
-                        "Start",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 24,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: Colors.green),
-                ),
-                onTap: () {
-                  _controller?.forward();
-                  _controller?.repeat();
-                  setState(() {
-                    isStop = false;
-                  });
-                },
-              ),
-            ],
+              decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  //borderRadius: BorderRadius.circular(10),
+                  color: isStop?Colors.green:Colors.red),
+            ),
+            onTap: () {
+              isStop?startAction():stopAction();
+            },
           ),
+
         ],
       ),
     );
   }
+
+  startAction(){
+    _controller?.forward();
+    _controller?.repeat();
+    setState(() {
+      isStop = false;
+    });
+  }
+  stopAction(){
+    _controller?.stop();
+    bool check = AtomPaint.checkCordination();
+    isStop = true;
+    if (check == true) {
+      setState(() {
+        result = "Win!";
+        _isMatch = true;
+        offset = Offset(10, 155);
+      });
+    } else {
+      setState(() {
+        _isMatch = false;
+        result = "Loss!";
+      });
+    }
+  }
+
 }
 
 var offset;
@@ -226,7 +213,7 @@ class AtomPaint extends CustomPainter {
     drawAxis(
         value,
         canvas,
-        160,
+        156,
         Paint()
           ..color = isStop
               ? _isMatch
@@ -279,7 +266,6 @@ class AtomPaint extends CustomPainter {
         0.0,
         pathMetric.length * value,
       );
-      print("path is $extractPath");
       try {
         offset1 = Offset(10, 155);
         canvas.drawCircle(offset1!, 20.0, Paint()..color = Colors.green);
@@ -310,7 +296,7 @@ class AtomPaint extends CustomPainter {
   static bool isXAxisNear() {
     print("////current position is ${offset1.dx},${offset1.dy}");
     // giving margin of 7;
-    if (offset1!.dx >= offset.dx - 7 && offset1.dx <= offset.dx + 7) {
+    if (offset1!.dx >= offset.dx - 1 && offset1.dx <= offset.dx + 1) {
       return true;
     } else {
       return false;
@@ -319,7 +305,7 @@ class AtomPaint extends CustomPainter {
 
   static bool isYAxisNear() {
     // giving margin of 7;
-    if (offset1!.dy >= offset.dy - 7 && offset1.dy <= offset.dy + 7) {
+    if (offset1!.dy >= offset.dy - 3 && offset1.dy <= offset.dy + 3) {
       return true;
     } else {
       return false;
